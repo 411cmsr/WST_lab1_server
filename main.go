@@ -1,31 +1,28 @@
 package main
 
 import (
-	"WST_lab1_server/configs"
-	"WST_lab1_server/migrations"
-	"WST_lab1_server/models"
+	"WST_lab1_server/database"
 	"WST_lab1_server/services"
-	"fmt"
 	"log"
 )
 
 func main() {
-
-	db, err := configs.InitializeDB()
+	//Определяем конфигурационный файл
+	configPath := "configs/configs.yaml"
+	//Подключаемся к базе данных(нужно создавать экземпляр?)
+	db, err := database.InitializeDB(configPath)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	err = migrations.Migrate(db)
+	//Добавляем схему если нет, удаляем старые данные и добавляем данные Persons
+	err = database.Migrate(db)
 	if err != nil {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
-	log.Println("Database migration succeeded")
-
-	var persons []models.Persons
-	db.Find(&persons)
-	for _, u := range persons {
-		fmt.Println(u)
+	//Запускаем soap-server (добавить wsdl-файл)
+	err = services.RunSoapServer(db)
+	if err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	services.RunSoapServer(db)
 }

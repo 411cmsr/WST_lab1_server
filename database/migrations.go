@@ -1,8 +1,9 @@
-package migrations
+package database
 
 import (
 	"WST_lab1_server/models"
 	"gorm.io/gorm"
+	"log"
 )
 
 func Migrate(db *gorm.DB) error {
@@ -10,6 +11,10 @@ func Migrate(db *gorm.DB) error {
 	if err != nil {
 		return err
 	}
+	log.Println("Database migration succeeded")
+	//Удаляем ранее добавленные в базу данные
+	db.Exec("DELETE FROM persons")
+	//Добавляем данные в базу
 	persons := []models.Persons{
 		{Name: "Петр", Surname: "Петров", Age: 25},
 		{Name: "Владимир", Surname: "Иванов", Age: 26},
