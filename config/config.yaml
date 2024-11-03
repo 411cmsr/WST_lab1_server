@@ -1,0 +1,45 @@
+database:
+  host: 127.0.0.1
+  user: pguser
+  password: pgpassword
+  name: wstbd
+  port: 5432
+  sslmode: disable
+soap:
+  pathsoap: soap
+  pathhttp: /
+persons:
+  - name: "Петр"
+    surname: "Петров"
+    age: 25
+  - name: "Владимир"
+    surname: "Иванов"
+    age: 26
+  - name: "Иван"
+    surname: "Иванов"
+    age: 27
+  - name: "Иммануил"
+    surname: "Канат"
+    age: 28
+  - name: "Джордж"
+    surname: "Клуни"
+    age: 29
+  - name: "Билл"
+    surname: "Рубцов"
+    age: 30
+  - name: "Марк"
+    surname: "Маркович"
+    age: 31
+  - name: "Галина"
+    surname: "Матвеева"
+    age: 32
+  - name: "Святослав"
+    surname: "Павлов"
+    age: 33
+  - name: "Ольга"
+    surname: "Беригальц"
+    age: 34
+  - name: "Лев"
+    surname: "Рябинович"
+    age: 35
+
