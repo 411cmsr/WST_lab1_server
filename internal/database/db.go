@@ -14,19 +14,19 @@ var db *gorm.DB
 
 func InitDB(configFile string) error {
 	var err error
-	config, err := config.LoadConfig(configFile)
+	configuration, err := config.LoadConfig(configFile)
 
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
-		config.Database.Host,
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Name,
-		config.Database.Port,
-		config.Database.SSLMode)
+		configuration.Database.Host,
+		configuration.Database.User,
+		configuration.Database.Password,
+		configuration.Database.Name,
+		configuration.Database.Port,
+		configuration.Database.SSLMode)
 
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -37,12 +37,12 @@ func InitDB(configFile string) error {
 }
 func UpdateDB(configFile string) error {
 	var err error
-	config, err := config.LoadConfig(configFile)
+	configuration, err := config.LoadConfig(configFile)
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
 	db.Exec("DELETE FROM people")
-	result := db.Create(&config.Persons)
+	result := db.Create(&configuration.Persons)
 	if result.Error != nil {
 		return result.Error
 	}
