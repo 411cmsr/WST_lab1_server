@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 
 	"WST_lab1_server/internal/database"
@@ -9,29 +9,46 @@ import (
 	"WST_lab1_server/internal/services"
 )
 
+var logger *zap.Logger
+
+// Инициализация логгера
+func init() {
+	var err error
+	logger, err = zap.NewProduction() // Или zap.NewDevelopment() для разработки
+	if err != nil {
+		panic(err)
+	}
+	defer func(logger *zap.Logger) {
+		err := logger.Sync()
+		if err != nil {
+
+		}
+	}(logger) // Отправка буферизованных логов
+}
+
 func AddPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	req := request.(*services.AddPersonRequest)
-	log.Printf("Received AddPerson request: %+v\n", req)
+	logger.Info("Received AddPerson request", zap.Any("request", req))
 	person := models.Person{Name: req.Name, Surname: req.Surname, Age: req.Age}
 
 	db := database.GetDB()
 
 	if err := db.Create(&person).Error; err != nil {
-		log.Printf("Error adding person: %v\n", err)
+		logger.Error("Error adding person", zap.Error(err))
 		return nil, err
 	}
-	log.Printf("Person added successfully: %+v\n", person)
+	logger.Info("Person added successfully", zap.Any("person", person))
 	return person, nil
 }
 
 func UpdatePersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	req := request.(*services.UpdatePersonRequest)
-	log.Printf("Received UpdatePerson request: %+v\n", req)
+	logger.Info("Received UpdatePerson request", zap.Any("request", req))
 	db := database.GetDB()
 
 	var person models.Person
 	if err := db.First(&person, req.ID).Error; err != nil {
-		log.Printf("Error finding person with ID %d: %v\n", req.ID, err)
+		logger.Error("Error finding person with ID", zap.Uint("ID", req.ID), zap.Error(err))
 		return nil, err
 	}
 
@@ -40,66 +57,66 @@ func UpdatePersonHandler(request interface{}, w http.ResponseWriter, r *http.Req
 	person.Age = req.Age
 
 	if err := db.Save(&person).Error; err != nil {
-		log.Printf("Error updating person: %v\n", err)
+		logger.Error("Error updating person", zap.Error(err))
 		return nil, err
 	}
-	log.Printf("Person updated successfully: %+v\n", person)
+	logger.Info("Person updated successfully", zap.Any("person", person))
 	return person, nil
 }
 
 func DeletePersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	req := request.(*services.DeletePersonRequest)
-	log.Printf("Received DeletePerson request: %+v\n", req)
+	logger.Info("Received DeletePerson request", zap.Any("request", req))
 	db := database.GetDB()
 
 	if err := db.Delete(&models.Person{}, req.ID).Error; err != nil {
-		log.Printf("Error deleting person with ID %d: %v\n", req.ID, err)
+		logger.Error("Error deleting person with ID", zap.Uint("ID", req.ID), zap.Error(err))
 		return nil, err
 	}
-	log.Printf("Person with ID %d deleted successfully.\n", req.ID)
+	logger.Info("Person deleted successfully", zap.Uint("ID", req.ID))
 	return "Deleted successfully", nil
 }
 
 func GetPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	req := request.(*services.GetPersonRequest)
-	log.Printf("Received GetPerson request: %+v\n", req)
+	logger.Info("Received GetPerson request", zap.Any("request", req))
 	var person models.Person
 
 	db := database.GetDB()
 
 	if err := db.First(&person, req.ID).Error; err != nil {
-		log.Printf("Error finding person with ID %d: %v\n", req.ID, err)
+		logger.Error("Error finding person with ID", zap.Uint("ID", req.ID), zap.Error(err))
 		return nil, err
 	}
-	log.Printf("Retrieved person: %+v\n", person)
+	logger.Info("Retrieved person successfully", zap.Any("person", person))
 	return person, nil
 }
 
 func GetAllPersonsHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	log.Println("Received GetAllPersons request.")
+	logger.Info("Received GetAllPersons request.")
 	var persons []models.Person
 
 	db := database.GetDB()
 
 	if err := db.Find(&persons).Error; err != nil {
-		log.Printf("Error retrieving all persons: %v\n", err)
+		logger.Error("Error retrieving all persons", zap.Error(err))
 		return nil, err
 	}
-	log.Printf("Retrieved all persons: %+v\n", persons)
+	logger.Info("Retrieved all persons successfully", zap.Any("persons", persons))
 	return services.GetAllPersonsResponse{Persons: persons}, nil
 }
 
 func SearchPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	req := request.(*services.SearchPersonRequest)
-	log.Printf("Received SearchPerson request with query: %s\n", req.Query)
+	logger.Info("Received SearchPerson request with query", zap.String("query", req.Query))
 	var persons []models.Person
 
 	db := database.GetDB()
 
 	if err := db.Where("name ILIKE ? OR surname ILIKE ?", "%"+req.Query+"%", "%"+req.Query+"%").Find(&persons).Error; err != nil {
-		log.Printf("Error searching for persons with query '%s': %v\n", req.Query, err)
+		logger.Error("Error searching for persons with query", zap.String("query", req.Query), zap.Error(err))
 		return nil, err
 	}
-	log.Printf("Found persons matching query '%s': %+v\n", req.Query, persons)
+	logger.Info("Found persons matching query successfully", zap.String("query", req.Query), zap.Any("persons", persons))
 	return services.GetAllPersonsResponse{Persons: persons}, nil
 }

@@ -1,7 +1,7 @@
 database:
-  host: 127.0.0.1
-  user: pguser
-  password: pgpassword
+  host: 192.168.253.229
+  user: postgres
+  password: postgres
   name: wstbd
   port: 5432
   sslmode: disable
