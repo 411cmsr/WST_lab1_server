@@ -4,13 +4,11 @@ import (
 	"WST_lab1_server/internal/database"
 	"WST_lab1_server/internal/transport"
 	"encoding/xml"
-	"fmt"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
 )
 
-// Определение структуры для SOAP Fault
 type SOAPFault struct {
 	XMLName     xml.Name `xml:"Fault"`
 	FaultString string   `xml:"faultstring"`
@@ -36,12 +34,6 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 		rec := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(rec, r)
-		fmt.Println("rec.ResponseWriter \n", rec.ResponseWriter)
-		fmt.Println("rec \n", rec)
-		fmt.Println("rec \n", r)
-		fmt.Println("rec.isFault \n", rec.isFault)
-		fmt.Println("faultMessage \n", rec.faultMessage)
-		fmt.Println("statusCode \n", rec.statusCode)
 		if rec.isFault {
 			logger.Warn("SOAP Fault occurred",
 				zap.String("fault_string", rec.faultMessage),
@@ -58,7 +50,6 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// responseRecorder для перехвата ответов
 type responseRecorder struct {
 	http.ResponseWriter
 	statusCode   int
@@ -82,7 +73,6 @@ func (r *responseRecorder) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-// Функция для проверки наличия SOAP Fault в ответе
 func isSOAPFault(body []byte) bool {
 	return xml.Unmarshal(body, new(SOAPFault)) == nil
 }

@@ -11,10 +11,9 @@ import (
 
 var logger *zap.Logger
 
-// Инициализация логгера
 func init() {
 	var err error
-	logger, err = zap.NewProduction() // Или zap.NewDevelopment() для разработки
+	logger, err = zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
@@ -23,7 +22,7 @@ func init() {
 		if err != nil {
 
 		}
-	}(logger) // Отправка буферизованных логов
+	}(logger)
 }
 
 func AddPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
