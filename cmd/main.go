@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-type SOAPFault struct {
+type Fault struct {
 	XMLName     xml.Name `xml:"Fault"`
 	FaultString string   `xml:"faultstring"`
 }
@@ -34,6 +34,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 		rec := &responseRecorder{ResponseWriter: w}
 		next.ServeHTTP(rec, r)
+
 		if rec.isFault {
 			logger.Warn("SOAP Fault occurred",
 				zap.String("fault_string", rec.faultMessage),
@@ -64,17 +65,30 @@ func (r *responseRecorder) WriteHeader(code int) {
 
 func (r *responseRecorder) Write(b []byte) (int, error) {
 	if isSOAPFault(b) {
-		var fault SOAPFault
-		if err := xml.Unmarshal(b, &fault); err == nil {
+		var envelope struct {
+			Body struct {
+				Fault Fault `xml:"Fault"`
+			} `xml:"Body"`
+		}
+		if err := xml.Unmarshal(b, &envelope); err == nil {
 			r.isFault = true
-			r.faultMessage = fault.FaultString
+			r.faultMessage = envelope.Body.Fault.FaultString
 		}
 	}
 	return r.ResponseWriter.Write(b)
 }
 
 func isSOAPFault(body []byte) bool {
-	return xml.Unmarshal(body, new(SOAPFault)) == nil
+	var envelope struct {
+		Body struct {
+			Fault Fault `xml:"Fault"`
+		} `xml:"Body"`
+	}
+	err := xml.Unmarshal(body, &envelope)
+	if err != nil || envelope.Body.Fault.FaultString == "" {
+		return false
+	}
+	return true
 }
 
 func main() {

@@ -112,10 +112,14 @@ func SearchPersonHandler(request interface{}, w http.ResponseWriter, r *http.Req
 
 	db := database.GetDB()
 
-	if err := db.Where("name ILIKE ? OR surname ILIKE ?", "%"+req.Query+"%", "%"+req.Query+"%").Find(&persons).Error; err != nil {
+	if err := db.Where("name ILIKE ? OR surname ILIKE ? OR age::text ILIKE ?", "%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%").Find(&persons).Error; err != nil {
 		logger.Error("Error searching for persons with query", zap.String("query", req.Query), zap.Error(err))
 		return nil, err
 	}
-	logger.Info("Found persons matching query successfully", zap.String("query", req.Query), zap.Any("persons", persons))
+	if len(persons) == 0 {
+		logger.Info("Search completed with no results", zap.String("query", req.Query))
+	} else {
+		logger.Info("Search completed successfully", zap.String("query", req.Query), zap.Int("count", len(persons)), zap.Any("results", persons))
+	}
 	return services.GetAllPersonsResponse{Persons: persons}, nil
 }
