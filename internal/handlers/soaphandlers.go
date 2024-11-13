@@ -6,7 +6,6 @@ import (
 
 	"WST_lab1_server/internal/database"
 	"WST_lab1_server/internal/models"
-	"WST_lab1_server/internal/services"
 )
 
 var logger *zap.Logger
@@ -26,7 +25,7 @@ func init() {
 }
 
 func AddPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*services.AddPersonRequest)
+	req := request.(*models.AddPersonRequest)
 	logger.Info("Received AddPerson request", zap.Any("request", req))
 	person := models.Person{Name: req.Name, Surname: req.Surname, Age: req.Age}
 
@@ -41,7 +40,7 @@ func AddPersonHandler(request interface{}, w http.ResponseWriter, r *http.Reques
 }
 
 func UpdatePersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*services.UpdatePersonRequest)
+	req := request.(*models.UpdatePersonRequest)
 	logger.Info("Received UpdatePerson request", zap.Any("request", req))
 	db := database.GetDB()
 
@@ -64,20 +63,20 @@ func UpdatePersonHandler(request interface{}, w http.ResponseWriter, r *http.Req
 }
 
 func DeletePersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*services.DeletePersonRequest)
+	req := request.(*models.DeletePersonRequest)
 	logger.Info("Received DeletePerson request", zap.Any("request", req))
 	db := database.GetDB()
 
 	if err := db.Delete(&models.Person{}, req.ID).Error; err != nil {
 		logger.Error("Error deleting person with ID", zap.Uint("ID", req.ID), zap.Error(err))
-		return nil, err
+		return models.DeletePersonResponse{Success: false}, err
 	}
 	logger.Info("Person deleted successfully", zap.Uint("ID", req.ID))
-	return "Deleted successfully", nil
+	return models.DeletePersonResponse{Success: true}, nil
 }
 
 func GetPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*services.GetPersonRequest)
+	req := request.(*models.GetPersonRequest)
 	logger.Info("Received GetPerson request", zap.Any("request", req))
 	var person models.Person
 
@@ -88,7 +87,7 @@ func GetPersonHandler(request interface{}, w http.ResponseWriter, r *http.Reques
 		return nil, err
 	}
 	logger.Info("Retrieved person successfully", zap.Any("person", person))
-	return person, nil
+	return models.GetPersonResponse{Person: person}, nil
 }
 
 func GetAllPersonsHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
@@ -102,11 +101,11 @@ func GetAllPersonsHandler(request interface{}, w http.ResponseWriter, r *http.Re
 		return nil, err
 	}
 	logger.Info("Retrieved all persons successfully", zap.Any("persons", persons))
-	return services.GetAllPersonsResponse{Persons: persons}, nil
+	return models.GetAllPersonsResponse{Persons: persons}, nil
 }
 
 func SearchPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*services.SearchPersonRequest)
+	req := request.(*models.SearchPersonRequest)
 	logger.Info("Received SearchPerson request with query", zap.String("query", req.Query))
 	var persons []models.Person
 
@@ -121,5 +120,5 @@ func SearchPersonHandler(request interface{}, w http.ResponseWriter, r *http.Req
 	} else {
 		logger.Info("Search completed successfully", zap.String("query", req.Query), zap.Int("count", len(persons)), zap.Any("results", persons))
 	}
-	return services.GetAllPersonsResponse{Persons: persons}, nil
+	return models.SearchPersonResponse{Persons: persons}, nil
 }
