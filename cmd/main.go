@@ -1,12 +1,15 @@
 package main
 
 import (
-	"WST_lab1_server/internal/database"
+	"WST_lab1_server/config"
+	//"WST_lab1_server/internal/database"
+	//"WST_lab1_server/internal/database/postgres"
 	"WST_lab1_server/internal/transport"
 	"encoding/xml"
-	"go.uber.org/zap"
 	"log"
 	"net/http"
+	
+	"go.uber.org/zap"
 )
 
 type Fault struct {
@@ -27,28 +30,28 @@ func init() {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Incoming request",
-			zap.String("method", r.Method),
-			zap.String("url", r.URL.String()),
-			zap.String("remote_addr", r.RemoteAddr),
-		)
-
-		rec := &responseRecorder{ResponseWriter: w}
-		next.ServeHTTP(rec, r)
-
-		if rec.isFault {
-			logger.Warn("SOAP Fault occurred",
-				zap.String("fault_string", rec.faultMessage),
-				zap.String("method", r.Method),
-				zap.String("url", r.URL.String()),
-			)
-		} else {
-			logger.Info("Response sent",
-				zap.String("method", r.Method),
-				zap.String("url", r.URL.String()),
-				zap.Int("status_code", rec.statusCode),
-			)
-		}
-	})
+		zap.String("method", r.Method),
+		zap.String("url", r.URL.String()),
+		zap.String("remote_addr", r.RemoteAddr),
+	)
+	
+	rec := &responseRecorder{ResponseWriter: w}
+	next.ServeHTTP(rec, r)
+	
+	if rec.isFault {
+		logger.Warn("SOAP Fault occurred",
+		zap.String("fault_string", rec.faultMessage),
+		zap.String("method", r.Method),
+		zap.String("url", r.URL.String()),
+	)
+	} else {
+		logger.Info("Response sent",
+		zap.String("method", r.Method),
+		zap.String("url", r.URL.String()),
+		zap.Int("status_code", rec.statusCode),
+	)
+}
+})
 }
 
 type responseRecorder struct {
@@ -68,56 +71,62 @@ func (r *responseRecorder) Write(b []byte) (int, error) {
 		var envelope struct {
 			Body struct {
 				Fault Fault `xml:"Fault"`
-			} `xml:"Body"`
+				} `xml:"Body"`
+			}
+			if err := xml.Unmarshal(b, &envelope); err == nil {
+				r.isFault = true
+				r.faultMessage = envelope.Body.Fault.FaultString
+			}
 		}
-		if err := xml.Unmarshal(b, &envelope); err == nil {
-			r.isFault = true
-			r.faultMessage = envelope.Body.Fault.FaultString
+		return r.ResponseWriter.Write(b)
+	}
+	
+	func isSOAPFault(body []byte) bool {
+		var envelope struct {
+			Body struct {
+				Fault Fault `xml:"Fault"`
+				} `xml:"Body"`
+			}
+			err := xml.Unmarshal(body, &envelope)
+			if err != nil || envelope.Body.Fault.FaultString == "" {
+				return false
+			}
+			return true
 		}
-	}
-	return r.ResponseWriter.Write(b)
-}
-
-func isSOAPFault(body []byte) bool {
-	var envelope struct {
-		Body struct {
-			Fault Fault `xml:"Fault"`
-		} `xml:"Body"`
-	}
-	err := xml.Unmarshal(body, &envelope)
-	if err != nil || envelope.Body.Fault.FaultString == "" {
-		return false
-	}
-	return true
-}
-
-func main() {
-	configFile := "config/config.yaml"
-
-	err := database.InitDB(configFile)
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	logger.Info("Database connection established successfully.")
-
-	err = database.UpdateDB(configFile)
-	if err != nil {
-		logger.Fatal("Failed to update database", zap.Error(err))
-	}
-	logger.Info("Database updated successfully.")
-
-	soapServer := transport.NewSOAPServer(configFile)
-	if err != nil {
-		logger.Fatal("Failed to run SOAP Server", zap.Error(err))
-	}
-
-	http.Handle("/", loggingMiddleware(soapServer))
-	logger.Info("Starting SOAP server on :8094")
-	if err := http.ListenAndServe(":8094", nil); err != nil {
-		logger.Fatal("Failed to start server", zap.Error(err))
-	}
-
-	if err := logger.Sync(); err != nil {
-		log.Fatalf("Error syncing logger: %v", err)
-	}
-}
+		
+		func main() {
+			config.Init()
+			
+			////
+			configFile := "config/config.yaml"
+			
+			//db := postgres.Init()
+			// if err != nil {
+			// 	logger.Fatal("Failed to connect to database", zap.Error(err))
+			// }
+			// logger.Info("Database connection established successfully.")
+			
+			// err = database.UpdateDB(configFile)
+			// if err != nil {
+			// 	logger.Fatal("Failed to update database", zap.Error(err))
+			// }
+			// logger.Info("Database updated successfully.")
+			
+			soapServer := transport.NewSOAPServer(configFile)
+			var err error
+			
+			if err != nil {
+				logger.Fatal("Failed to run SOAP Server", zap.Error(err))
+			}
+			
+			http.Handle("/", loggingMiddleware(soapServer))
+			logger.Info("Starting SOAP server on :8094")
+			if err := http.ListenAndServe(":8094", nil); err != nil {
+				logger.Fatal("Failed to start server", zap.Error(err))
+			}
+			
+			if err := logger.Sync(); err != nil {
+				log.Fatalf("Error syncing logger: %v", err)
+			}
+		}
+		

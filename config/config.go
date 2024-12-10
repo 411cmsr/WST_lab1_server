@@ -2,42 +2,90 @@ package config
 
 import (
 	"WST_lab1_server/internal/models"
-	"gopkg.in/yaml.v3"
+	"fmt"
+	"log"
 	"os"
+	"time"
+
+	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
+// Структура конфигурации
 type Config struct {
-	Database struct {
-		Host     string `yaml:"host"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Name     string `yaml:"name"`
-		Port     int    `yaml:"port"`
-		SSLMode  string `yaml:"sslmode"`
-	} `yaml:"database"`
-	Soap struct {
-		PathSoap string `yaml:"pathsoap"`
-		PathHttp string `yaml:"pathhttp"`
-	} `yaml:"soap"`
-	Persons []models.Person `yaml:"persons"`
+	GeneralServer GeneralServerConfig `yaml:"generalServer"`
+	HTTPServer    HTTPServerConfig    `yaml:"httpServer"`
+	Database      DatabaseConfig      `yaml:"database"`
 }
 
-func LoadConfig(filePath string) (*Config, error) {
-	file, err := os.Open(filePath)
+// Структура конфигурации сервера
+type GeneralServerConfig struct {
+	Env      string          `yaml:"env" env-required:"true"`
+	LogLevel string          `yaml:"logLevel" env-default:"debug"`
+	DataSet  []models.Person `yaml:"persons"`
+}
+
+// Структура конфигурации HTTP сервера
+type HTTPServerConfig struct {
+	RunMode        string        `yaml:"runMode"`
+	BindAddr       string        `yaml:"bindAddr"`
+	PatHTTP        string        `yaml:"patHTTP"`
+	PathSoap       string        `yaml:"pathSoap"`
+	ReadTimeout    time.Duration `yaml:"readTimeout"`
+	WriteTimeout   time.Duration `yaml:"writeTimeout"`
+	ConnectTimeout time.Duration `yaml:"connectTimeout"`
+}
+
+// Структура конфигурации подключения к базе данных
+type DatabaseConfig struct {
+	Host     string `yaml:"host"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Name     string `yaml:"name"`
+	Port     int    `yaml:"port"`
+	SSLMode  string `yaml:"sslMode"`
+}
+
+// Переменные конфигурации
+var (
+	config               Config
+	GeneralServerSetting = &GeneralServerConfig{}
+	HTTPServerSetting    = &HTTPServerConfig{}
+	DatabaseSetting      = &DatabaseConfig{}
+)
+
+// Функция инициализации конфигурации
+func Init() {
+	var pathConfigFile string
+	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, err
+		fmt.Println(err)
+	}
+	//Проверяем hostname для загрузки нужной конфигурации
+	if hostname == "test-XWPC" {
+		pathConfigFile = "config/vm.yaml"
+	} else {
+		pathConfigFile = "config/pc.yaml"
+	}
+	//Открываем файл конфигурации
+	file, err := os.Open(pathConfigFile)
+	if err != nil {
+		log.Fatal("error opening file config", zap.Error(err))
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-
+			log.Fatal("error closing file config", zap.Error(err))
 		}
 	}(file)
-
-	var config Config
+	//Читаем файл конфигурации
 	decoder := yaml.NewDecoder(file)
+	//Привязываем переменные конфигурации
 	if err := decoder.Decode(&config); err != nil {
-		return nil, err
+		log.Fatal("error decoding file config", zap.Error(err))
 	}
-	return &config, nil
+	*GeneralServerSetting = config.GeneralServer
+	*HTTPServerSetting = config.HTTPServer
+	*DatabaseSetting = config.Database
+
 }

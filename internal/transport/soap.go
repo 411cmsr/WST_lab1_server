@@ -5,28 +5,29 @@ import (
 	"WST_lab1_server/internal/handlers"
 
 	"WST_lab1_server/internal/services"
+	//"log"
+
 	"github.com/globusdigital/soap"
-	"log"
 )
 
 func NewSOAPServer(configFile string) *soap.Server {
-	configuration, err := config.LoadConfig(configFile)
+	//configuration, err := config.LoadConfig(configFile)
 
-	if err != nil {
-		log.Fatalf("error loading config: %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("error loading config: %v", err)
+	//}
 	soapServer := soap.NewServer()
-	soapServer.RegisterHandler(configuration.Soap.PathHttp+configuration.Soap.PathSoap,
+	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "AddPerson", services.AddPersonRequestFactory, handlers.AddPersonHandler)
-	soapServer.RegisterHandler(configuration.Soap.PathHttp+configuration.Soap.PathSoap,
+	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "UpdatePerson", services.UpdatePersonRequestFactory, handlers.UpdatePersonHandler)
-	soapServer.RegisterHandler(configuration.Soap.PathHttp+configuration.Soap.PathSoap,
+	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "DeletePerson", services.DeletePersonRequestFactory, handlers.DeletePersonHandler)
-	soapServer.RegisterHandler(configuration.Soap.PathHttp+configuration.Soap.PathSoap,
+	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "GetPerson", services.GetPersonRequestFactory, handlers.GetPersonHandler)
-	soapServer.RegisterHandler(configuration.Soap.PathHttp+configuration.Soap.PathSoap,
+	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "GetAllPersons", services.GetAllPersonsRequestFactory, handlers.GetAllPersonsHandler)
-	soapServer.RegisterHandler(configuration.Soap.PathHttp+configuration.Soap.PathSoap,
+	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "SearchPerson", services.SearchPersonRequestFactory, handlers.SearchPersonHandler)
 
 	return soapServer
