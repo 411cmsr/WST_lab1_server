@@ -2,11 +2,6 @@ package postgres
 
 import (
 	"WST_lab1_server/config"
-
-	// "errors"
-	// "strconv"
-	// "strings"
-
 	"WST_lab1_server/internal/logging"
 	"WST_lab1_server/internal/models"
 	"fmt"
@@ -29,6 +24,7 @@ type Storage struct {
 Инициализация
 */
 func Init() *Storage {
+	config.Init()
 	logging.Init()
 	var err error
 	//Уровень логирования из файла конфигурации
@@ -54,6 +50,7 @@ func Init() *Storage {
 		config.DatabaseSetting.Port,
 		config.DatabaseSetting.SSLMode)
 	//Подключаемся к базе данных
+	fmt.Println("TTTTTTTTTTTTTTTTTTTTTT", dsn)
 	conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logLevel),
 	})

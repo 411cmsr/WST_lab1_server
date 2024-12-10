@@ -10,12 +10,7 @@ import (
 	"github.com/globusdigital/soap"
 )
 
-func NewSOAPServer(configFile string) *soap.Server {
-	//configuration, err := config.LoadConfig(configFile)
-
-	// if err != nil {
-	// 	log.Fatalf("error loading config: %v", err)
-	//}
+func NewSOAPServer() *soap.Server {
 	soapServer := soap.NewServer()
 	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "AddPerson", services.AddPersonRequestFactory, handlers.AddPersonHandler)
@@ -29,6 +24,5 @@ func NewSOAPServer(configFile string) *soap.Server {
 		"Request", "GetAllPersons", services.GetAllPersonsRequestFactory, handlers.GetAllPersonsHandler)
 	soapServer.RegisterHandler(config.HTTPServerSetting.PatHTTP+config.HTTPServerSetting.PathSoap,
 		"Request", "SearchPerson", services.SearchPersonRequestFactory, handlers.SearchPersonHandler)
-
 	return soapServer
 }

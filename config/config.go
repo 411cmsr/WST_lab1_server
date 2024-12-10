@@ -58,17 +58,22 @@ var (
 func Init() {
 	var pathConfigFile string
 	hostname, err := os.Hostname()
+	fmt.Println(hostname)
 	if err != nil {
 		fmt.Println(err)
 	}
 	//Проверяем hostname для загрузки нужной конфигурации
 	if hostname == "test-XWPC" {
 		pathConfigFile = "config/vm.yaml"
+		fmt.Println(pathConfigFile)
 	} else {
 		pathConfigFile = "config/pc.yaml"
+		fmt.Println(pathConfigFile)
 	}
+	fmt.Println(pathConfigFile)
 	//Открываем файл конфигурации
 	file, err := os.Open(pathConfigFile)
+
 	if err != nil {
 		log.Fatal("error opening file config", zap.Error(err))
 	}
