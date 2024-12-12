@@ -71,25 +71,26 @@ func DeletePersonHandler(request interface{}, w http.ResponseWriter, r *http.Req
 	req := request.(*models.DeletePersonRequest)
 	logger.Info("Received DeletePerson request", zap.Any("request", req))
 
-	if err := storage.DB.Delete(&models.Person{}, req.ID).Error; err != nil {
+	var person models.Person
+	if err := storage.DB.First(&person, req.ID).Error; err != nil {
+
+		// Если запись не найдена, возвращаем faultstring и detail
+		logger.Error("Error finding person with ID", zap.Uint("ID", req.ID), zap.Error(err))
+		//soapFaultResponse :=&models.SOAPFault{}
+		return &models.SOAPFault {
+			FaultCode:   "Client",
+			FaultString: "Status false",
+			Detail:      "Record not found.",
+		}, nil
+	}
+
+	if err := storage.DB.Delete(&person).Error; err != nil {
 		logger.Error("Error deleting person with ID", zap.Uint("ID", req.ID), zap.Error(err))
 		return nil, err
 	}
+
 	logger.Info("Person deleted successfully", zap.Uint("ID", req.ID))
-	return "Deleted successfully", nil
-}
-
-func GetPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*models.GetPersonRequest)
-	logger.Info("Received GetPerson request", zap.Any("request", req))
-	var person models.Person
-
-	if err := storage.DB.First(&person, req.ID).Error; err != nil {
-		logger.Error("Error finding person with ID", zap.Uint("ID", req.ID), zap.Error(err))
-		return nil, err
-	}
-	logger.Info("Retrieved person successfully", zap.Any("person", person))
-	return models.GetPersonResponse{Person: person}, nil
+	return &models.DeleteResponse{Status: true}, nil 
 }
 
 func GetAllPersonsHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
