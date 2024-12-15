@@ -63,12 +63,10 @@ database:
   password: postgres
   name: wstbd
   port: 5432
-  sslMode: disable
-httpServer:
+  sslmode: disable    
+httpserver:
   runMode: "debug"
-  bindAddr: ":8094"
-  patHTTP: /
-  pathSoap: soap
+  bindAddr: ":8095"
   readTimeout: 10s
   writeTimeout: 10s
-  connectTimeout: 3s   
+  connectTimeout: 3s

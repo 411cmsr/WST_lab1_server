@@ -1,29 +1,32 @@
 package models
-type SearchPersonRequest struct {
-	Query string `xml:"query"`
-}
 
 type AddPersonRequest struct {
-	Name    string `xml:"name"`
-	Surname string `xml:"surname"`
-	Age     int    `xml:"age"`
-	Email   string `xml:"email"`
-	Telephone string `xml:"telephone"`
-}
-
-type UpdatePersonRequest struct {
-	ID      uint   `xml:"id"`
-	Name    string `xml:"name"`
-	Surname string `xml:"surname"`
-	Age     int    `xml:"age"`
-	Email   string `xml:"email"`
-	Telephone string `xml:"telephone"`
+	Name      string `xml:"Name"`
+	Surname   string `xml:"Surname"`
+	Age       int    `xml:"Age"`
+	Email     string `xml:"Email"`
+	Telephone string `xml:"Telephone"`
 }
 
 type DeletePersonRequest struct {
-	ID uint `xml:"id"`
+	ID int `xml:"ID"`
+}
+
+type UpdatePersonRequest struct {
+	ID        uint    `xml:"ID"`
+	Name      string `xml:"Name"`
+	Surname   string `xml:"Surname"`
+	Age       int    `xml:"Age"`
+	Email     string `xml:"Email"`
+	Telephone string `xml:"Telephone"`
 }
 
 type GetPersonRequest struct {
-	ID uint `xml:"id"`
+	ID uint `xml:"ID"`
+}
+
+type GetAllPersonsRequest struct{}
+
+type SearchPersonRequest struct {
+	Query string `xml:"Query"`
 }

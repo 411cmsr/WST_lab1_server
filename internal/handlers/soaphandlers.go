@@ -1,123 +1,188 @@
 package handlers
 
 import (
+	"WST_lab1_server_new1/internal/database/postgres"
+	"WST_lab1_server_new1/internal/models"
+	"bytes"
+	"encoding/xml"
+	"fmt"
+	"io"
 	"net/http"
+	"regexp"
 
-	"go.uber.org/zap"
+	//"strconv"
 
-	//"WST_lab1_server/internal/database"
-	"WST_lab1_server/internal/database/postgres"
-	"WST_lab1_server/internal/models"
+	"github.com/gin-gonic/gin"
 )
 
-var (
-	logger  *zap.Logger
-	storage *postgres.Storage
-)
+/*
+Структура обработчика для разделения логики обработки запросов от доступа к данным
+*/
+type StorageHandler struct {
+	Storage *postgres.Storage
+}
 
-func init() {
-	var err error
-	logger, err = zap.NewDevelopment()
+/*
+Функция проверки email на корректность
+*/
+func validateEmail(email string) bool {
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	return re.MatchString(email)
+}
+
+/*
+Функция проверки телефона на корректность
+*/
+func validatePhone(phone string) bool {
+	re := regexp.MustCompile(`^\+7\d{10}$`)
+	return re.MatchString(phone)
+}
+
+func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
+	var envelope models.Envelope
+
+	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		panic(err)
+		c.String(http.StatusInternalServerError, "Error reading request body")
+		return
 	}
-	storage = postgres.Init()
-	defer func(logger *zap.Logger) {
-		err := logger.Sync()
-		if err != nil {
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
-		}
-	}(logger)
+	if err := xml.Unmarshal(body, &envelope); err != nil {
+		fmt.Println("Error decoding XML:", err)
+		c.String(http.StatusBadRequest, "Invalid request")
+		return
+	}
+
+	// Печатаем содержание структуры в консоль
+	fmt.Printf("Decoded Envelope: %+v\n", envelope)
+	switch {
+	case envelope.Body.AddPerson != nil:
+		sh.addPersonHandler(envelope.Body.AddPerson)
+		fmt.Println("envelope.Body.AddPerson")
+	case envelope.Body.DeletePerson != nil:
+		fmt.Println("envelope.Body.DeletePerson")
+		sh.deletePersonHandler(envelope.Body.DeletePerson)
+	case envelope.Body.UpdatePerson != nil:
+		fmt.Println("envelope.Body.UpdatePerson")
+		sh.updatePersonHandler(envelope.Body.UpdatePerson)
+	case envelope.Body.GetPerson != nil:
+		fmt.Println("envelope.Body.GetPerson")
+		sh.getPersonHandler(envelope.Body.GetPerson)
+	case envelope.Body.GetAllPersons != nil:
+		fmt.Println("envelope.Body.GetAllPersons")
+		sh.getAllPersonsHandler()
+	case envelope.Body.SearchPerson != nil:
+		fmt.Println("envelope.Body.SearchPerson")
+		sh.searchPersonHandler(envelope.Body.SearchPerson)
+	default:
+		fmt.Println("Unsupported action")
+		c.String(http.StatusBadRequest, "Unsupported action")
+		return
+	}
+
+	c.String(http.StatusOK, "Request processed successfully")
 }
 
-func AddPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*models.AddPersonRequest)
-	logger.Info("Received AddPerson request", zap.Any("request", req))
-	person := models.Person{Name: req.Name, Surname: req.Surname, Age: req.Age}
-
-	if err := storage.DB.Create(&person).Error; err != nil {
-		logger.Error("Error adding person", zap.Error(err))
-		return nil, err
+func (h *StorageHandler) addPersonHandler(request *models.AddPersonRequest) {
+	person := models.Person{
+		Name:      request.Name,
+		Surname:   request.Surname,
+		Age:       request.Age,
+		Email:     request.Email,
+		Telephone: request.Telephone,
 	}
-	logger.Info("Person added successfully", zap.Any("person", person))
-	return person, nil
+
+	id, err := h.Storage.PersonRepository.AddPerson(&person)
+	if err != nil {
+		fmt.Printf("Error adding person: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Person added with ID: %d\n", id)
 }
 
-func UpdatePersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*models.UpdatePersonRequest)
-	logger.Info("Received UpdatePerson request", zap.Any("request", req))
-
-	var person models.Person
-	if err := storage.DB.First(&person, req.ID).Error; err != nil {
-		logger.Error("Error finding person with ID", zap.Uint("ID", req.ID), zap.Error(err))
-		return nil, err
+func (h *StorageHandler) updatePersonHandler(request *models.UpdatePersonRequest) {
+	person := models.Person{
+		ID:        uint(request.ID),
+		Name:      request.Name,
+		Surname:   request.Surname,
+		Age:       request.Age,
+		Email:     request.Email,
+		Telephone: request.Telephone,
 	}
 
-	person.Name = req.Name
-	person.Surname = req.Surname
-	person.Age = req.Age
-	person.Email = req.Email
-	person.Telephone = req.Telephone
-
-	if err := storage.DB.Save(&person).Error; err != nil {
-		logger.Error("Error updating person", zap.Error(err))
-		return nil, err
+	err := h.Storage.PersonRepository.UpdatePerson(&person)
+	if err != nil {
+		fmt.Printf("Error updating person with ID %d: %v\n", request.ID, err)
+		return
 	}
-	logger.Info("Person updated successfully", zap.Any("person", person))
-	return person, nil
+
+	fmt.Printf("Successfully updated person with ID: %d\n", request.ID)
 }
 
-func DeletePersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*models.DeletePersonRequest)
-	logger.Info("Received DeletePerson request", zap.Any("request", req))
-
-	var person models.Person
-	if err := storage.DB.First(&person, req.ID).Error; err != nil {
-
-		// Если запись не найдена, возвращаем faultstring и detail
-		logger.Error("Error finding person with ID", zap.Uint("ID", req.ID), zap.Error(err))
-		//soapFaultResponse :=&models.SOAPFault{}
-		return &models.SOAPFault {
-			FaultCode:   "Client",
-			FaultString: "Status false",
-			Detail:      "Record not found.",
-		}, nil
+func (h *StorageHandler) getPersonHandler(request *models.GetPersonRequest) {
+	person, err := h.Storage.PersonRepository.GetPerson(request.ID)
+	if err != nil {
+		fmt.Printf("Error getting person with ID %d: %v\n", request.ID, err)
+		return
 	}
 
-	if err := storage.DB.Delete(&person).Error; err != nil {
-		logger.Error("Error deleting person with ID", zap.Uint("ID", req.ID), zap.Error(err))
-		return nil, err
-	}
-
-	logger.Info("Person deleted successfully", zap.Uint("ID", req.ID))
-	return &models.DeleteResponse{Status: true}, nil 
-}
-
-func GetAllPersonsHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	logger.Info("Received GetAllPersons request.")
-	var persons []models.Person
-
-	if err := storage.DB.Find(&persons).Error; err != nil {
-		logger.Error("Error retrieving all persons", zap.Error(err))
-		return nil, err
-	}
-	logger.Info("Retrieved all persons successfully", zap.Any("persons", persons))
-	return models.GetAllPersonsResponse{Persons: persons}, nil
-}
-
-func SearchPersonHandler(request interface{}, w http.ResponseWriter, r *http.Request) (interface{}, error) {
-	req := request.(*models.SearchPersonRequest)
-	logger.Info("Received SearchPerson request with query", zap.String("query", req.Query))
-	var persons []models.Person
-
-	if err := storage.DB.Where("name ILIKE ? OR surname ILIKE ? OR age::text ILIKE ?", "%"+req.Query+"%", "%"+req.Query+"%", "%"+req.Query+"%").Find(&persons).Error; err != nil {
-		logger.Error("Error searching for persons with query", zap.String("query", req.Query), zap.Error(err))
-		return nil, err
-	}
-	if len(persons) == 0 {
-		logger.Info("Search completed with no results", zap.String("query", req.Query))
+	if person == nil {
+		fmt.Printf("No person found with ID %d\n", request.ID)
 	} else {
-		logger.Info("Search completed successfully", zap.String("query", req.Query), zap.Int("count", len(persons)), zap.Any("results", persons))
+		fmt.Printf("Retrieved person: %+v\n", person)
 	}
-	return models.GetAllPersonsResponse{Persons: persons}, nil
 }
+
+func (h *StorageHandler) getAllPersonsHandler() {
+	persons, err := h.Storage.PersonRepository.GetAllPersons()
+	if err != nil {
+		fmt.Printf("Error getting all persons: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Retrieved all persons: %+v\n", persons)
+}
+
+func (h *StorageHandler) deletePersonHandler(request *models.DeletePersonRequest) {
+	// Создаем новый экземпляр DeletePersonRequest
+	deleteRequest := &models.DeletePersonRequest{
+		ID: request.ID,
+	}
+	checkByID, err := h.Storage.PersonRepository.CheckPersonByID(uint(deleteRequest.ID))
+	if err != nil {
+		fmt.Printf("Error getting person with ID %d: %v\n", request.ID, err)
+		return
+	} else if !checkByID {
+		fmt.Println("Person not found")
+		return
+
+	}
+
+	fmt.Println("deletePersonHandler: ", deleteRequest)
+	// Вызываем метод DeletePerson из репозитория
+	err = h.Storage.PersonRepository.DeletePerson(deleteRequest)
+	if err != nil {
+
+		fmt.Printf("Error deleting person with ID %d: %v\n", request.ID, err)
+		return
+	}
+
+	fmt.Printf("Successfully deleted person with ID: %d\n", request.ID)
+}
+
+func (h *StorageHandler) searchPersonHandler(request *models.SearchPersonRequest) {
+	persons, err := h.Storage.PersonRepository.SearchPerson(request.Query)
+	if err != nil {
+		fmt.Printf("Error searching for persons with query '%s': %v\n", request.Query, err)
+		return
+	}
+
+	if len(persons) == 0 {
+		fmt.Println("No persons found.")
+	} else {
+		fmt.Printf("Found persons: %+v\n", persons)
+	}
+}
+
