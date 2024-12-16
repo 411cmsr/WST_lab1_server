@@ -8,6 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
+
+
+
 // ErrorHandler - middleware для обработки ошибок
 func ErrorHandler() gin.HandlerFunc {
     return func(c *gin.Context) {

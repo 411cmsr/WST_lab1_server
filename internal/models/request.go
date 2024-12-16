@@ -12,6 +12,7 @@ type DeletePersonRequest struct {
 	ID int `xml:"ID"`
 }
 
+
 type UpdatePersonRequest struct {
 	ID        uint    `xml:"ID"`
 	Name      string `xml:"Name"`
@@ -29,4 +30,12 @@ type GetAllPersonsRequest struct{}
 
 type SearchPersonRequest struct {
 	Query string `xml:"Query"`
+}
+type Body struct {
+	AddPerson      *AddPersonRequest      `xml:"AddPerson,omitempty"`
+	DeletePerson   *DeletePersonRequest   `xml:"DeletePerson,omitempty"`
+	UpdatePerson   *UpdatePersonRequest   `xml:"UpdatePerson,omitempty"`
+	GetPerson      *GetPersonRequest      `xml:"GetPerson,omitempty"`
+	GetAllPersons  *GetAllPersonsRequest  `xml:"GetAllPersons,omitempty"`
+	SearchPerson   *SearchPersonRequest   `xml:"SearchPerson,omitempty"`
 }

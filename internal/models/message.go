@@ -16,14 +16,6 @@ type Header struct {
 
 }
 
-type Body struct {
-	AddPerson     *AddPersonRequest     `xml:"AddPerson,omitempty"`
-	DeletePerson  *DeletePersonRequest  `xml:"DeletePerson,omitempty"`
-	UpdatePerson  *UpdatePersonRequest  `xml:"UpdatePerson,omitempty"`
-	GetPerson     *GetPersonRequest     `xml:"GetPerson,omitempty"`
-	GetAllPersons *GetAllPersonsRequest `xml:"GetAllPersons,omitempty"`
-	SearchPerson  *SearchPersonRequest  `xml:"SearchPerson,omitempty"`
-	SOAPFault     *SOAPFault            `xml:"Fault,omitempty"`
-}
+
 
 

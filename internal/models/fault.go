@@ -5,13 +5,27 @@ package models
 // )
 
 type SOAPFault struct {
-	//XMLName xml.Name `xml:"Fault"`
-	FaultCode   string `xml:"faultcode"`
-	FaultString string `xml:"faultstring"`
-	FaultActor   string   `xml:"actor"`
-	Detail      string `xml:"detail"`
+	Envelope struct {
+		Body struct {
+			Fault struct {
+				Code    string `xml:"faultcode"`
+				Message string `xml:"faultstring"`
+				Detail  struct {
+					ErrorCode    string `xml:"errorCode"`
+					ErrorMessage string `xml:"errorMessage"`
+				} `xml:"detail"`
+			} `xml:"Fault"`
+		} `xml:"Body"`
+	} `xml:"Envelope"`
 }
+
 
 // func (s *SOAPFault) Error() string {
 // 	panic("unimplemented")
 // }
+
+const (
+	ErrorRecordNotFoundCode    = "404"
+	ErrorRecordNotFoundMessage = "Запись не найдена"
+	ErrorRecordNotFoundDetail  = "Запрашиваемая запись отсутствует в базе данных."
+)

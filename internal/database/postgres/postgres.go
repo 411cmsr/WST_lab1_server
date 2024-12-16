@@ -262,9 +262,12 @@ func (pr *PersonRepository) CheckPersonByID(id uint) (bool, error) {
 	if result.Error != nil {
 		//Проверяем наличие записи по id
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			fmt.Println("Record not found")
+			//fmt.Println("Record not found")
+			return false, nil
 		} else {
-			fmt.Println("Error when executing the request:", result.Error)
+			
+			//fmt.Println("Error when executing the request:", result.Error)
+			return false, result.Error
 		}
 	} else {
 		fmt.Println("The record was found with CheckPersonByIDHandler:", person)
