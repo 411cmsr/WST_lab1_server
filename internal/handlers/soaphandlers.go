@@ -75,8 +75,8 @@ func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
 		sh.deletePersonHandler(c, envelope.Body.DeletePerson) // Передаем контекст и запрос
 	case envelope.Body.UpdatePerson != nil:
 		sh.updatePersonHandler(c, envelope.Body.UpdatePerson)
-case envelope.Body.GetPerson != nil:
-    sh.getPersonHandler(c, envelope.Body.GetPerson) // Передаем контекст и запрос
+	case envelope.Body.GetPerson != nil:
+		sh.getPersonHandler(c, envelope.Body.GetPerson) // Передаем контекст и запрос
 	case envelope.Body.GetAllPersons != nil:
 		sh.getAllPersonsHandler(c)
 	case envelope.Body.SearchPerson != nil:
@@ -170,33 +170,34 @@ func (h *StorageHandler) updatePersonHandler(c *gin.Context, request *models.Upd
 }
 
 func (h *StorageHandler) getPersonHandler(c *gin.Context, request *models.GetPersonRequest) {
-    // Получаем информацию о человеке по ID
-    person, err := h.Storage.PersonRepository.GetPerson(request.ID)
-    if err != nil {
-        logging.Logger.Error("Error getting person with ID", zap.Uint("ID", uint(request.ID)), zap.Error(err))
+	// Получаем информацию о человеке по ID
+	fmt.Println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDSWSSASADAAAAAAAAAAAAA", request.ID)
+	person, err := h.Storage.PersonRepository.GetPerson(request.ID)
+	if err != nil {
+		logging.Logger.Error("Error getting person with ID", zap.Uint("ID", uint(request.ID)), zap.Error(err))
 
-        // Формируем SOAP Fault для ошибки получения
-        fault := createSOAPFault("soap:Server", "Internal Server Error", "500", "An unexpected error occurred.")
-        c.XML(http.StatusInternalServerError, fault)
-        return
-    }
+		// Формируем SOAP Fault для ошибки получения
+		fault := createSOAPFault("soap:Server", "Internal Server Error", "500", "An unexpected error occurred.")
+		c.XML(http.StatusInternalServerError, fault)
+		return
+	}
 
-    // Если человек не найден, формируем SOAP Fault для клиента
-    if person == nil {
-        fmt.Printf("No person found with ID %d\n", request.ID)
+	// Если человек не найден, формируем SOAP Fault для клиента
+	if person == nil {
+		fmt.Printf("No person found with ID %d\n", request.ID)
 
-        fault := createSOAPFault("soap:Client", models.ErrorRecordNotFoundMessage, models.ErrorRecordNotFoundCode, models.ErrorRecordNotFoundDetail)
-        c.XML(http.StatusNotFound, fault)
-        return
-    }
+		fault := createSOAPFault("soap:Client", models.ErrorRecordNotFoundMessage, models.ErrorRecordNotFoundCode, models.ErrorRecordNotFoundDetail)
+		c.XML(http.StatusNotFound, fault)
+		return
+	}
 
-    // Если человек найден, формируем ответ
-    response := models.GetPersonResponse{
-        Person: *person, // Разыменовываем указатель на структуру Person
-    }
+	// Если человек найден, формируем ответ
+	response := models.GetPersonResponse{
+		Person: *person, // Разыменовываем указатель на структуру Person
+	}
 
-    // Возвращаем успешный ответ в формате XML
-    c.XML(http.StatusOK, response)
+	// Возвращаем успешный ответ в формате XML
+	c.XML(http.StatusOK, response)
 }
 
 func (h *StorageHandler) getAllPersonsHandler(c *gin.Context) {
