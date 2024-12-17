@@ -16,7 +16,7 @@ func Init(httpserver *gin.Engine, storage *postgres.Storage) {
 	httpserver.Use(gin.Recovery())
 	//Логгирование
 	httpserver.Use(gin.Logger())
-
+	//debug печать полного запроса
 	httpserver.Use(middleware.PrintFullReques())
 
 	handler := &handlers.StorageHandler{Storage: storage}

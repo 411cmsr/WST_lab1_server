@@ -11,11 +11,9 @@ import (
 	"net/http"
 	"regexp"
 
-	//"strconv"
-
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	//"gorm.io/gorm/logger"
+
 )
 
 /*
@@ -49,7 +47,7 @@ func validatePhone(phone string) bool {
 	re := regexp.MustCompile(`^\+7\d{10}$`)
 	return re.MatchString(phone)
 }
-
+//Обработчик SOAP запросов
 func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
 	var envelope models.Envelope
 
@@ -72,15 +70,15 @@ func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
 	case envelope.Body.AddPerson != nil:
 		sh.addPersonHandler(c, envelope.Body.AddPerson)
 	case envelope.Body.DeletePerson != nil:
-		sh.deletePersonHandler(c, envelope.Body.DeletePerson) // Передаем контекст и запрос
+		sh.deletePersonHandler(c, envelope.Body.DeletePerson)
 	case envelope.Body.UpdatePerson != nil:
 		sh.updatePersonHandler(c, envelope.Body.UpdatePerson)
 	case envelope.Body.GetPerson != nil:
-		sh.getPersonHandler(c, envelope.Body.GetPerson) // Передаем контекст и запрос
+		sh.getPersonHandler(c, envelope.Body.GetPerson)
 	case envelope.Body.GetAllPersons != nil:
 		sh.getAllPersonsHandler(c)
 	case envelope.Body.SearchPerson != nil:
-		sh.searchPersonHandler(c, envelope.Body.SearchPerson) // Передаем контекст и запрос
+		sh.searchPersonHandler(c, envelope.Body.SearchPerson)
 	default:
 		fmt.Println("Unsupported action")
 		c.String(http.StatusBadRequest, "Unsupported action")
@@ -88,8 +86,9 @@ func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
 	}
 }
 
+//Метод добавления новой записи в базу данных
 func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPersonRequest) {
-	// Создаем нового человека на основе запроса
+	// Создаем person с данными из запроса
 	person := models.Person{
 		Name:      request.Name,
 		Surname:   request.Surname,
@@ -98,7 +97,7 @@ func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPer
 		Telephone: request.Telephone,
 	}
 
-	// Добавляем человека в базу данных
+	// Добавляем person в базу данных
 	id, err := h.Storage.PersonRepository.AddPerson(&person)
 	if err != nil {
 		fmt.Printf("Error adding person: %v\n", err)
@@ -108,10 +107,8 @@ func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPer
 		c.XML(http.StatusInternalServerError, fault)
 		return
 	}
-
 	fmt.Printf("Person added with ID: %d\n", id)
 
-	// Формируем успешный ответ
 	response := models.AddPersonResponse{
 		ID: id,
 	}
@@ -119,7 +116,7 @@ func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPer
 	// Возвращаем успешный ответ в формате XML
 	c.XML(http.StatusOK, response)
 }
-
+//Метод удаления записи из базы данных
 func (h *StorageHandler) updatePersonHandler(c *gin.Context, request *models.UpdatePersonRequest) {
 	// Проверяем, существует ли человек с данным ID
 	checkByID, err := h.Storage.PersonRepository.CheckPersonByID(uint(request.ID))
@@ -131,14 +128,14 @@ func (h *StorageHandler) updatePersonHandler(c *gin.Context, request *models.Upd
 		return
 	}
 
-	// Если человек не найден, формируем SOAP Fault для клиента
+	// Если запись не найдена, формируем SOAP Fault для клиента
 	if !checkByID {
 		fault := createSOAPFault("soap:Client", models.ErrorRecordNotFoundMessage, models.ErrorRecordNotFoundCode, models.ErrorRecordNotFoundDetail)
 		c.XML(http.StatusNotFound, fault)
 		return
 	}
 
-	// Создаем объект Person на основе запроса
+	// Создаем объект типа Person на основе запроса
 	person := models.Person{
 		ID:        uint(request.ID),
 		Name:      request.Name,
@@ -160,29 +157,29 @@ func (h *StorageHandler) updatePersonHandler(c *gin.Context, request *models.Upd
 
 	logging.Logger.Info("Successfully updated person with ID", zap.Uint("ID", uint(request.ID)))
 
-	// Формируем успешный ответ
+	
 	response := models.UpdatePersonResponse{
 		Status: true,
 	}
 
-	// Возвращаем успешный ответ в формате XML
+	// Возвращаем результат в формате XML
 	c.XML(http.StatusOK, response)
 }
 
 func (h *StorageHandler) getPersonHandler(c *gin.Context, request *models.GetPersonRequest) {
 	// Получаем информацию о человеке по ID
-	fmt.Println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDSWSSASADAAAAAAAAAAAAA", request.ID)
+	//fmt.Println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDSWSSASADAAAAAAAAAAAAA", request.ID)
 	person, err := h.Storage.PersonRepository.GetPerson(request.ID)
 	if err != nil {
 		logging.Logger.Error("Error getting person with ID", zap.Uint("ID", uint(request.ID)), zap.Error(err))
 
-		// Формируем SOAP Fault для ошибки получения
+		// Формируем SOAP Fault при ошибке
 		fault := createSOAPFault("soap:Server", "Internal Server Error", "500", "An unexpected error occurred.")
 		c.XML(http.StatusInternalServerError, fault)
 		return
 	}
 
-	// Если человек не найден, формируем SOAP Fault для клиента
+	// Если записи не найдены, формируем SOAP Fault для клиента
 	if person == nil {
 		fmt.Printf("No person found with ID %d\n", request.ID)
 
@@ -193,15 +190,15 @@ func (h *StorageHandler) getPersonHandler(c *gin.Context, request *models.GetPer
 
 	// Если человек найден, формируем ответ
 	response := models.GetPersonResponse{
-		Person: *person, // Разыменовываем указатель на структуру Person
+		Person: *person,
 	}
 
-	// Возвращаем успешный ответ в формате XML
+	// Возвращаем результат в формате XML
 	c.XML(http.StatusOK, response)
 }
-
+//Метод получения всех записей
 func (h *StorageHandler) getAllPersonsHandler(c *gin.Context) {
-	// Получаем всех людей из репозитория
+	// Получаем все записи из базы
 	persons, err := h.Storage.PersonRepository.GetAllPersons()
 	if err != nil {
 		logging.Logger.Error("Error getting all persons", zap.Error(err))
@@ -212,7 +209,7 @@ func (h *StorageHandler) getAllPersonsHandler(c *gin.Context) {
 		return
 	}
 
-	// Если людей не найдено, формируем SOAP Fault для клиента
+	// Если записи не найдены, формируем SOAP Fault для клиента
 	if len(persons) == 0 {
 		fmt.Println("No persons found.")
 
@@ -221,16 +218,17 @@ func (h *StorageHandler) getAllPersonsHandler(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ в формате SOAP
 	response := models.GetAllPersonsResponse{
 		Persons: persons,
 	}
 
-	// Возвращаем успешный ответ в формате XML
+	// Возвращаем результат в формате XML
 	c.XML(http.StatusOK, response)
 }
 
+//Метод удаления записи по ID
 func (h *StorageHandler) deletePersonHandler(c *gin.Context, request *models.DeletePersonRequest) {
+	//Проверяем существование записи по ID, если нет, формируем SOAP Fault
 	checkByID, err := h.Storage.PersonRepository.CheckPersonByID(uint(request.ID))
 	if err != nil {
 		logging.Logger.Error("Error getting person with ID", zap.Uint("ID", uint(request.ID)), zap.Error(err))
@@ -243,7 +241,7 @@ func (h *StorageHandler) deletePersonHandler(c *gin.Context, request *models.Del
 		c.XML(http.StatusNotFound, fault)
 		return
 	}
-
+	//Удаляем запись по ID из базы
 	err = h.Storage.PersonRepository.DeletePerson(request)
 	if err != nil {
 		logging.Logger.Error("Error deleting person with ID", zap.Uint("ID", uint(request.ID)), zap.Error(err))
@@ -254,10 +252,14 @@ func (h *StorageHandler) deletePersonHandler(c *gin.Context, request *models.Del
 	}
 
 	logging.Logger.Info("Successfully deleted person with ID", zap.Uint("ID", uint(request.ID)))
-	c.XML(http.StatusOK, models.DeleteResponse{Status: true}) // Возвращаем успешный ответ
+	//Формируем статус в формате SOAP
+	c.XML(http.StatusOK, models.DeleteResponse{Status: true}) 
+	
 }
 
+//Метод поиска записей по запросу
 func (h *StorageHandler) searchPersonHandler(c *gin.Context, request *models.SearchPersonRequest) {
+
 	persons, err := h.Storage.PersonRepository.SearchPerson(request.Query)
 	if err != nil {
 		logging.Logger.Error("Error searching for persons with query", zap.String("query", request.Query), zap.Error(err))
@@ -277,7 +279,7 @@ func (h *StorageHandler) searchPersonHandler(c *gin.Context, request *models.Sea
 		fmt.Printf("Found persons: %+v\n", persons)
 	}
 
-	// Формируем ответ в формате SOAP
+	// Формируем результат в формате SOAP
 	response := models.SearchPersonResponse{
 		Persons: persons,
 	}

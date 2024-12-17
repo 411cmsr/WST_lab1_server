@@ -1,8 +1,6 @@
 package models
 
-// import (
-// 	"encoding/xml"
-// )
+
 
 type SOAPFault struct {
 	Envelope struct {
@@ -18,11 +16,6 @@ type SOAPFault struct {
 		} `xml:"Body"`
 	} `xml:"Envelope"`
 }
-
-
-// func (s *SOAPFault) Error() string {
-// 	panic("unimplemented")
-// }
 
 const (
 	ErrorRecordNotFoundCode    = "404"

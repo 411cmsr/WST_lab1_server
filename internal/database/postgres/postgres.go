@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"WST_lab1_server_new1/config"
+	"WST_lab1_server_new1/internal/database"
 	"WST_lab1_server_new1/internal/logging"
 	"WST_lab1_server_new1/internal/models"
-	"WST_lab1_server_new1/internal/database"
 
 	"errors"
 	"strconv"
@@ -23,14 +23,13 @@ import (
  */
 
 type Storage struct {
-	DB *gorm.DB
-	PersonRepository   *PersonRepository
+	DB               *gorm.DB
+	PersonRepository *PersonRepository
 }
 
 type PersonRepository struct {
 	DB *gorm.DB
 }
-
 
 /*
 Инициализация
@@ -85,8 +84,9 @@ func Init() (*Storage, error) {
 	if result.Error != nil {
 		log.Fatalf("error creating table: %v", result.Error)
 	}
-	//Выводим при удачном заполнениитаблицы
+	//Выводим при удачном заполнении таблицы
 	logging.Logger.Info("Database updated successfully.")
+
 	/*
 		//Debug: Запрос к базе и вывод всех данных
 	*/
@@ -102,8 +102,8 @@ func Init() (*Storage, error) {
 	/*
 		----
 	*/
-	//Возвращаем указатель на базу данных
-	//return &Storage{DB: db}, nil
+	//Возвращаем указатель
+
 	personRepo := &PersonRepository{DB: db}
 	return &Storage{
 		DB:               db,
@@ -150,11 +150,12 @@ func (pr *PersonRepository) AddPerson(person *models.Person) (uint, error) {
 	if err := pr.DB.Create(person).Error; err != nil {
 		return 0, err
 	}
+	//Возвращаем id созданной записи
 	return person.ID, nil
 }
 
 /*
-Метод получения данных
+Метод получения данных по id
 */
 func (pr *PersonRepository) GetPerson(id uint) (*models.Person, error) {
 	var person models.Person
@@ -201,24 +202,12 @@ func (pr *PersonRepository) UpdatePerson(person *models.Person) error {
 Метод удаления данных по id
 */
 
-// func (pr *PersonRepository) DeletePerson(request *models.DeletePersonRequest) {
-// 	err := pr.DB.Delete(request.ID)
-// 	if err != nil {
-// 		fmt.Printf("Error deleting person with ID %d: %v\n", request.ID, err)
-// 		return
-// 	}
-
-// 	fmt.Printf("Successfully deleted person with ID: %d\n", request.ID)
-// }
-
 func (pr *PersonRepository) DeletePerson(request *models.DeletePersonRequest) error {
 	if err := pr.DB.Delete(&models.Person{}, request.ID).Error; err != nil {
 		return err
 	}
 	return nil
 }
-
-
 
 /*
 Метод получения всех данных
@@ -263,9 +252,9 @@ func (pr *PersonRepository) CheckPersonByID(id uint) (bool, error) {
 		//Проверяем наличие записи по id
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			//fmt.Println("Record not found")
-			return false, nil
+			return false, database.ErrPersonNotFound
 		} else {
-			
+
 			//fmt.Println("Error when executing the request:", result.Error)
 			return false, result.Error
 		}
