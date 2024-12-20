@@ -1,7 +1,5 @@
 package models
 
-
-
 type SOAPFault struct {
 	Envelope struct {
 		Body struct {
@@ -18,7 +16,10 @@ type SOAPFault struct {
 }
 
 const (
-	ErrorRecordNotFoundCode    = "404"
-	ErrorRecordNotFoundMessage = "Запись не найдена"
-	ErrorRecordNotFoundDetail  = "Запрашиваемая запись отсутствует в базе данных."
+	ErrorRecordNotFoundCode      = "404"
+	ErrorRecordNotFoundMessage   = "Запись не найдена"
+	ErrorRecordNotFoundDetail    = "Запрашиваемая запись отсутствует в базе данных."
+	ErrorRecordEmailExistsCode   = "409"
+	ErrorEmailExistsInDatabase   = "Запись уже существует"
+	ErrorRecordEmailExistsDetail = "Запись с данным email уже существует"
 )

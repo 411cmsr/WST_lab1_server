@@ -201,7 +201,6 @@ func (pr *PersonRepository) UpdatePerson(person *models.Person) error {
 /*
 Метод удаления данных по id
 */
-
 func (pr *PersonRepository) DeletePerson(request *models.DeletePersonRequest) error {
 	if err := pr.DB.Delete(&models.Person{}, request.ID).Error; err != nil {
 		return err
