@@ -1,23 +1,34 @@
 package models
 
 type GetAllPersonsResponse struct {
-	Persons []Person `xml:"person"`
+	Persons []Person `xml:"persons"`
 }
 type GetPersonResponse struct {
-	Person Person `xml:"person"`
+    Person Person `xml:"Person"` 
 }
 
-type SOAPFault struct {
-	FaultCode   string `xml:"faultcode"`
-	FaultString string `xml:"faultstring"`
-	Detail      string `xml:"detail"`
-}
-
-// Error implements error.
-func (s *SOAPFault) Error() string {
-	panic("unimplemented")
+// ErrorResponse представляет ошибку в формате SOAP
+type ErrorResponse struct {
+	Type     string `xml:"type"`
+	Title    string `xml:"title"`
+	Status   int    `xml:"status"`
+	Detail   string `xml:"detail"`
+	Instance string `xml:"instance"`
 }
 
 type DeleteResponse struct {
 	Status bool `xml:"status"`
+}
+
+type SearchPersonResponse struct {
+    Persons []Person `xml:"Persons"`
+}
+
+
+type AddPersonResponse struct {
+    ID uint `xml:"ID"`
+}
+
+type UpdatePersonResponse struct {
+    Status bool `xml:"status"`
 }

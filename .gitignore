@@ -27,6 +27,7 @@ go.work.sum
 
 /configs/configs.yaml
 .air.toml
-.vscode/*
-tmp/*
+.vscode/
+tmp/
 postgres.session.sql
+.vscode/settings.json

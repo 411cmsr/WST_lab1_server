@@ -1,7 +1,7 @@
 package config
 
 import (
-	"WST_lab1_server/internal/models"
+	"WST_lab1_server_new1/internal/models"
 	"fmt"
 	"log"
 	"os"
@@ -27,13 +27,10 @@ type GeneralServerConfig struct {
 
 // Структура конфигурации HTTP сервера
 type HTTPServerConfig struct {
-	RunMode        string        `yaml:"runMode"`
-	BindAddr       string        `yaml:"bindAddr"`
-	PatHTTP        string        `yaml:"patHTTP"`
-	PathSoap       string        `yaml:"pathSoap"`
-	ReadTimeout    time.Duration `yaml:"readTimeout"`
-	WriteTimeout   time.Duration `yaml:"writeTimeout"`
-	ConnectTimeout time.Duration `yaml:"connectTimeout"`
+	RunMode      string        `yaml:"runMode"`
+	BindAddr     string        `yaml:"bindAddr"`
+	ReadTimeout  time.Duration `yaml:"readTimeout"`
+	WriteTimeout time.Duration `yaml:"writeTimeout"`
 }
 
 // Структура конфигурации подключения к базе данных
@@ -58,22 +55,17 @@ var (
 func Init() {
 	var pathConfigFile string
 	hostname, err := os.Hostname()
-	fmt.Println(hostname)
 	if err != nil {
 		fmt.Println(err)
 	}
 	//Проверяем hostname для загрузки нужной конфигурации
 	if hostname == "test-XWPC" {
 		pathConfigFile = "config/vm.yaml"
-		fmt.Println(pathConfigFile)
 	} else {
 		pathConfigFile = "config/pc.yaml"
-		fmt.Println(pathConfigFile)
 	}
-	fmt.Println(pathConfigFile)
 	//Открываем файл конфигурации
 	file, err := os.Open(pathConfigFile)
-
 	if err != nil {
 		log.Fatal("error opening file config", zap.Error(err))
 	}
