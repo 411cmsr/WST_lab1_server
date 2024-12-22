@@ -177,6 +177,10 @@ func (pr *PersonRepository) GetPerson(id uint) (*models.Person, error) {
 */
 func (pr *PersonRepository) UpdatePerson(person *models.Person) error {
 	//Выполняем запрос к базе данных для обновления записи
+	if _, err := pr.CheckPersonByEmail(person.Email, person.ID); err == nil {
+		return database.ErrEmailExists
+	}
+	//Выполняем запрос к базе данных для обновления записи
 	result := pr.DB.Model(&models.Person{}).Where("id = ?", person.ID).Updates(models.Person{
 		Name:      person.Name,
 		Surname:   person.Surname,
@@ -233,10 +237,12 @@ func (pr *PersonRepository) CheckPersonByEmail(email string, excludeId uint) (*m
 			//Возвращаем кастомную ошибку (Запись не найдена)
 			return nil, database.ErrPersonNotFound
 		}
+		fmt.Println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", err)
 		//Возвращаем ошибку
 		return nil, err
 	}
 	//Возвращаем запись
+	fmt.Println("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr", person)
 	return &person, nil
 }
 

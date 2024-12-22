@@ -16,10 +16,16 @@ type SOAPFault struct {
 }
 
 const (
-	ErrorRecordNotFoundCode      = "404"
-	ErrorRecordNotFoundMessage   = "Запись не найдена"
-	ErrorRecordNotFoundDetail    = "Запрашиваемая запись отсутствует в базе данных."
-	ErrorRecordEmailExistsCode   = "409"
-	ErrorEmailExistsInDatabase   = "Запись уже существует"
-	ErrorRecordEmailExistsDetail = "Запись с данным email уже существует"
+	ErrorRecordNotFoundCode          = "404"
+	ErrorRecordNotFoundMessage       = "Запись не найдена"
+	ErrorRecordNotFoundDetail        = "Запрашиваемая запись отсутствует в базе данных."
+	ErrorRecordEmailExistsCode       = "409"
+	ErrorRecordEmailExistsMessage    = "Запись уже существует"
+	ErrorRecordEmailExistsDetail     = "Запись с данным email уже существует"
+	ErrorEmailIncorrectCode          = "409"
+	ErrorEmailIncorrectMessage       = "Некорректный email"
+	ErrorEmailIncorrectDetail        = "Получен некорректный email"
+	ErrorPhoneNumberIncorrectCode    = "409"
+	ErrorPhoneNumberIncorrectMessage = "Некорректный phone number"
+	ErrorPhoneNumberIncorrectDetail  = "Получен некорректный phone number"
 )
