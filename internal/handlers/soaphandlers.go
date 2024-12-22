@@ -118,22 +118,6 @@ func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPer
 		return
 	}
 
-	//checkByEmail, err := h.Storage.PersonRepository.CheckPersonByEmail(request.Email, 0)
-	//if err != nil {
-	//	if errors.Is(err, database.ErrPersonNotFound) {
-	//
-	//		//logging.Logger.Info("Person not found", zap.String("Email:", request.Email), zap.Error(err))
-	//		//fault := createSOAPFault("soap:Client", models.ErrorEmailExistsInDatabase, models.ErrorRecordEmailExistsCode, models.ErrorRecordEmailExistsDetail)
-	//		//fmt.Printf("Response Fault: %+v\n", fault)
-	//		//c.XML(http.StatusConflict, fault)
-	//		//return
-	//
-	//	}
-	//}
-	//if checkByEmail != nil {
-	//	fmt.Printf("Person found with email: %d\n", checkByEmail.Email)
-	//}
-
 	// Добавляем person в базу данных
 	id, err := h.Storage.PersonRepository.AddPerson(&person)
 	if err != nil {
@@ -240,11 +224,9 @@ func (h *StorageHandler) updatePersonHandler(c *gin.Context, request *models.Upd
 
 func (h *StorageHandler) getPersonHandler(c *gin.Context, request *models.GetPersonRequest) {
 	// Получаем информацию о человеке по ID
-	//fmt.Println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDSWSSASADAAAAAAAAAAAAA", request.ID)
 	person, err := h.Storage.PersonRepository.GetPerson(request.ID)
 	if err != nil {
 
-		fmt.Printf("Error getting personnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn: %v\n", err)
 		if errors.Is(err, database.ErrPersonNotFound) {
 			fault := createSOAPFault("soap:Client", models.ErrorRecordNotFoundMessage, models.ErrorRecordNotFoundCode, models.ErrorRecordNotFoundDetail)
 			fmt.Printf("Response Fault: %+v\n", fault)

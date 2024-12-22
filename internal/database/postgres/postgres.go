@@ -237,12 +237,12 @@ func (pr *PersonRepository) CheckPersonByEmail(email string, excludeId uint) (*m
 			//Возвращаем кастомную ошибку (Запись не найдена)
 			return nil, database.ErrPersonNotFound
 		}
-		fmt.Println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", err)
+
 		//Возвращаем ошибку
 		return nil, err
 	}
 	//Возвращаем запись
-	fmt.Println("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr", person)
+
 	return &person, nil
 }
 
