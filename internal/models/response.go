@@ -7,7 +7,7 @@ type GetPersonResponse struct {
     Person Person `xml:"Person"` 
 }
 
-// ErrorResponse представляет ошибку в формате SOAP
+
 type ErrorResponse struct {
 	Type     string `xml:"type"`
 	Title    string `xml:"title"`

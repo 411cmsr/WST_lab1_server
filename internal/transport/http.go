@@ -11,7 +11,7 @@ import (
 func Init(httpserver *gin.Engine, storage *postgres.Storage) {
 	//middleware для обработки ошибок
 	httpserver.Use(middleware.ErrorHandler())
-	
+
 	//Восстановление после паники
 	httpserver.Use(gin.Recovery())
 	//Логгирование
@@ -21,5 +21,5 @@ func Init(httpserver *gin.Engine, storage *postgres.Storage) {
 
 	handler := &handlers.StorageHandler{Storage: storage}
 	//Подключение к БД
-	httpserver.POST("/soap", handler.SOAPHandler) 
+	httpserver.POST("/soap", handler.SOAPHandler)
 }

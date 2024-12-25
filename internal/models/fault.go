@@ -28,4 +28,7 @@ const (
 	ErrorPhoneNumberIncorrectCode    = "409"
 	ErrorPhoneNumberIncorrectMessage = "Некорректный phone number"
 	ErrorPhoneNumberIncorrectDetail  = "Получен некорректный phone number"
+	ErrorAuthIncorrectCode           = "401"
+	ErrorAuthIncorrectMessage        = "Неудачная Аутентификация"
+	ErrorAuthIncorrectDetail         = "Введен некорректный логин или пароль"
 )

@@ -6,6 +6,7 @@ import (
 	"WST_lab1_server_new1/internal/logging"
 	"WST_lab1_server_new1/internal/models"
 	"bytes"
+	"encoding/base64"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -53,8 +55,53 @@ func validatePhone(phone string) bool {
 	return re.MatchString(phone)
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+func (h *StorageHandler) BasicAuth(c *gin.Context) bool {
+	auth := c.Request.Header.Get("Authorization")
+	if auth == "" {
+		c.String(http.StatusUnauthorized, "Authorization header is missing")
+		return false
+	}
+
+	const prefix = "Basic "
+	if !strings.HasPrefix(auth, prefix) {
+		c.String(http.StatusUnauthorized, "Authorization header must start with 'Basic'")
+		return false
+	}
+
+	payload, err := base64.StdEncoding.DecodeString(auth[len(prefix):])
+	if err != nil {
+		c.String(http.StatusUnauthorized, "Invalid base64 encoding")
+		return false
+	}
+
+	pair := strings.SplitN(string(payload), ":", 2)
+	if len(pair) != 2 {
+		c.String(http.StatusUnauthorized, "Invalid authorization format")
+		return false
+	}
+
+	username, password := pair[0], pair[1]
+	if !validateCredentials(username, password) { 
+		c.String(http.StatusUnauthorized, "Invalid username or password")
+		return false
+	}
+	return true
+}
+
+
+func validateCredentials(username, password string) bool {
+	const validUsername = "root"
+	const validPassword = "password"
+	return username == validUsername && password == validPassword
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 // Обработчик SOAP запросов
 func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
+
 	var envelope models.Envelope
 
 	body, err := io.ReadAll(c.Request.Body)
@@ -94,6 +141,16 @@ func (sh *StorageHandler) SOAPHandler(c *gin.Context) {
 
 // Метод добавления новой записи в базу данных
 func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPersonRequest) {
+	//////////////////////////////////////
+	if !h.BasicAuth(c) {
+		logging.Logger.Error("Error Invalid user login or password")
+		fault := createSOAPFault("soap:Client", models.ErrorAuthIncorrectMessage, models.ErrorAuthIncorrectCode, models.ErrorAuthIncorrectDetail)
+		fmt.Printf("Response Fault: %+v\n", fault)
+		c.XML(http.StatusUnauthorized, fault)
+
+		return
+	}
+	//////////////////////////////////////
 	// Создаем person с данными из запроса
 	person := models.Person{
 		Name:      request.Name,
@@ -149,6 +206,15 @@ func (h *StorageHandler) addPersonHandler(c *gin.Context, request *models.AddPer
 
 // Метод обновления записи в базе данных
 func (h *StorageHandler) updatePersonHandler(c *gin.Context, request *models.UpdatePersonRequest) {
+	//////////////////////////////////////
+	if !h.BasicAuth(c) {
+		logging.Logger.Error("Error Invalid user login or password")
+		fault := createSOAPFault("soap:Client", models.ErrorAuthIncorrectMessage, models.ErrorAuthIncorrectCode, models.ErrorAuthIncorrectDetail)
+		fmt.Printf("Response Fault: %+v\n", fault)
+		c.XML(http.StatusUnauthorized, fault)
+		return
+	}
+	//////////////////////////////////////
 	//Проверяем на корректность Email
 	if !validateEmail(request.Email) {
 		logging.Logger.Info("Email is", zap.String("Email:", request.Email))
@@ -297,9 +363,19 @@ func (h *StorageHandler) getAllPersonsHandler(c *gin.Context) {
 
 // Метод удаления записи по ID
 func (h *StorageHandler) deletePersonHandler(c *gin.Context, request *models.DeletePersonRequest) {
+	//////////////////////////////////////
+	if !h.BasicAuth(c) {
+		logging.Logger.Error("Error Invalid user login or password")
+		fault := createSOAPFault("soap:Client", models.ErrorAuthIncorrectMessage, models.ErrorAuthIncorrectCode, models.ErrorAuthIncorrectDetail)
+		fmt.Printf("Response Fault: %+v\n", fault)
+		c.XML(http.StatusUnauthorized, fault)
+		return
+	}
+	//////////////////////////////////////
 	//Проверяем существование записи по ID, если нет, формируем SOAP Fault
 	checkByID, err := h.Storage.PersonRepository.CheckPersonByID(uint(request.ID))
 	if !checkByID {
+		logging.Logger.Error("Error getting person with ID", zap.Uint("ID", uint(request.ID)), zap.Error(err))
 		fault := createSOAPFault("soap:Client", models.ErrorRecordNotFoundMessage, models.ErrorRecordNotFoundCode, models.ErrorRecordNotFoundDetail)
 		fmt.Printf("Response Fault: %+v\n", fault)
 		c.XML(http.StatusNotFound, fault)

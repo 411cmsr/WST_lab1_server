@@ -9,4 +9,5 @@ var (
 	ErrEmptyQuery     = errors.New("empty query")
 	ErrQueryTooLong   = errors.New("query too long")
 	ErrEmailExists    = errors.New("email exists")
+	
 )
